@@ -1,0 +1,31 @@
+variable "global_variables" {
+  type = object({
+    project = string
+    region  = string
+    account = number
+    prefix  = string
+  })
+  description = "Global variables for sharing across modules"
+}
+
+variable "cloudfront_cache_policy" {
+  type        = string
+  description = "(Required) CloudFront cache policy name. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html for more details."
+}
+
+variable "cloudfront_origin_request_policy" {
+  type        = string
+  description = "(Optional) CloudFront origin request policy name. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html for more details."
+  default     = null
+
+  validation {
+    condition = var.cloudfront_origin_request_policy != "Managed-AllViewer"
+    error_message = "S3 expects the origin's host and cannot resolve the distribution's host."
+  }
+}
+
+variable "cloudfront_response_headers_policy" {
+  type        = string
+  description = "(Optional) CloudFront response header policy name. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html for more details."
+  default     = null
+}
