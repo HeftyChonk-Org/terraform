@@ -8,6 +8,16 @@ variable "global_variables" {
   description = "Global variables for sharing across modules"
 }
 
+variable "s3_origin_bucket" {
+  type = object({
+    id                          = string
+    arn                         = string
+    bucket                      = string
+    bucket_regional_domain_name = string
+  })
+  description = "S3 origin bucket attributes"
+}
+
 variable "cloudfront_cache_policy" {
   type        = string
   description = "(Required) CloudFront cache policy name. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html for more details."
@@ -19,7 +29,7 @@ variable "cloudfront_origin_request_policy" {
   default     = null
 
   validation {
-    condition = var.cloudfront_origin_request_policy != "Managed-AllViewer"
+    condition     = var.cloudfront_origin_request_policy != "Managed-AllViewer"
     error_message = "S3 expects the origin's host and cannot resolve the distribution's host."
   }
 }

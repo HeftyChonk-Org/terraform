@@ -33,7 +33,7 @@ variable "branch" {
 }
 
 # ==========================================================================================
-# module: web
+# module: cdn
 # ==========================================================================================
 
 variable "cloudfront_cache_policy" {
@@ -47,7 +47,7 @@ variable "cloudfront_origin_request_policy" {
   default     = null
 
   validation {
-    condition = var.cloudfront_origin_request_policy != "Managed-AllViewer"
+    condition     = var.cloudfront_origin_request_policy != "Managed-AllViewer"
     error_message = "S3 expects the origin's host and cannot resolve the distribution's host."
   }
 }
@@ -66,3 +66,12 @@ variable "cloudfront_response_headers_policy" {
 # module: db
 # ==========================================================================================
 
+variable "max_read_request_units" {
+  type        = number
+  description = "(Required) maximum number of strongly consistent reads consumed per second before DynamoDB returns a ThrottlingException."
+}
+
+variable "max_write_request_units" {
+  type        = number
+  description = "(Required) maximum number of writes consumed per second before DynamoDB returns a ThrottlingException."
+}
