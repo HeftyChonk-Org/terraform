@@ -1,17 +1,17 @@
-resource "aws_dynamodb_table" "table" {
-  name                        = "${var.global_variables.prefix}-table"
+resource "aws_dynamodb_table" "main_table" {
+  name                        = "${var.global_variables.prefix}-main-table"
   billing_mode                = "PAY_PER_REQUEST"
-  hash_key                    = "BlogID"
-  range_key                   = "PublishDate"
+  hash_key                    = "Type"
+  range_key                   = "Slug"
   deletion_protection_enabled = strcontains(terraform.workspace, "prod") ? true : false
 
   attribute {
-    name = "BlogID"
+    name = "Type"
     type = "S"
   }
 
   attribute {
-    name = "PublishDate"
+    name = "Slug"
     type = "S"
   }
 
@@ -21,35 +21,62 @@ resource "aws_dynamodb_table" "table" {
   }
 
   attribute {
-    name = "Service"
+    name = "PublishDate"
     type = "S"
   }
 
   attribute {
-    name = "Tool"
+    name = "SubCategory"
     type = "S"
   }
 
-  local_secondary_index {
+  on_demand_throughput {
+    max_read_request_units = var.main_table_max_read_request_units
+    max_write_request_units = var.main_table_max_write_request_units
+  }
+
+  global_secondary_index {
     name = "CategoryIndex"
-    projection_type = "ALL"
-    range_key = "Category"
+    hash_key = "Category"
+    range_key = "PublishDate"
+    projection_type    = "INCLUDE"
+    non_key_attributes = ["SubCategory", "Slug"]
+  }
+
+  global_secondary_index {
+    name = "SubCategoryIndex"
+    hash_key = "SubCategory"
+    range_key = "PublishDate"
+    projection_type    = "INCLUDE"
+    non_key_attributes = ["Category", "Slug"]
   }
 
   local_secondary_index {
-    name = "ServiceIndex"
-    projection_type = "ALL"
-    range_key = "Service"
+    name = "PublishDateIndex"
+    range_key = "PublishDate"
+    projection_type    = "ALL"
+  }
+}
+
+resource "aws_dynamodb_table" "tag_ref_table" {
+  name                        = "${var.global_variables.prefix}-tag-ref-table"
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = "Category"
+  range_key                   = "Value"
+  deletion_protection_enabled = strcontains(terraform.workspace, "prod") ? true : false
+
+  attribute {
+    name = "Category"
+    type = "S"
   }
 
-  local_secondary_index {
-    name = "ToolIndex"
-    projection_type = "ALL"
-    range_key = "Tool"
+  attribute {
+    name = "Value"
+    type = "S"
   }
 
   on_demand_throughput {
-    max_read_request_units = var.max_read_request_units
-    max_write_request_units = var.max_write_request_units
+    max_read_request_units = var.tag_ref_table_max_read_request_units
+    max_write_request_units = var.tag_ref_table_max_write_request_units
   }
 }

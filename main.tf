@@ -22,7 +22,7 @@ module "cdn" {
   cloudfront_response_headers_policy = var.cloudfront_response_headers_policy
 }
 
-module "api" {
+module "api" { 
   source           = "./modules/api"
   global_variables = local.global_variables
 }
@@ -30,6 +30,8 @@ module "api" {
 module "db" {
   source           = "./modules/db"
   global_variables = local.global_variables
-  max_read_request_units = var.max_read_request_units
-  max_write_request_units = var.max_write_request_units
+  main_table_max_read_request_units = var.main_table_max_read_request_units
+  main_table_max_write_request_units = var.main_table_max_write_request_units
+  tag_ref_table_max_read_request_units = var.tag_ref_table_max_read_request_units
+  tag_ref_table_max_write_request_units = var.tag_ref_table_max_write_request_units
 }
