@@ -1,6 +1,6 @@
-output "main_table_name" {
-  description = "DynamoDB main table name"
-  value = aws_dynamodb_table.main_table.name
+output "blog_table_name" {
+  description = "DynamoDB blog table name"
+  value = aws_dynamodb_table.blog_table.name
 }
 
 output "tag_ref_table_name" {

@@ -8,12 +8,12 @@ variable "global_variables" {
   description = "Global variables for sharing across modules"
 }
 
-variable "main_table_max_read_request_units" {
+variable "blog_table_max_read_request_units" {
   type        = number
   description = "(Required) Maximum number of strongly consistent reads consumed per second for the main table before DynamoDB returns a ThrottlingException."
 }
 
-variable "main_table_max_write_request_units" {
+variable "blog_table_max_write_request_units" {
   type        = number
   description = "(Required) Maximum number of writes consumed per second for the main table before DynamoDB returns a ThrottlingException."
 }

@@ -1,0 +1,479 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "test-rest-api",
+    "version": "2025-02-08T16:16:29Z"
+  },
+  "servers": [
+    {
+      "url": "https://oubny0l7w0.execute-api.ap-southeast-1.amazonaws.com/{basePath}",
+      "variables": {
+        "basePath": {
+          "default": "dev"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/tags": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "credentials": "arn:aws:iam::741448960615:role/api-gateway-test-rest-api-service-role",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:ap-southeast-1:dynamodb:action/Scan",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              },
+              "responseTemplates": {
+                "application/json": "#set($items = $util.parseJson($input.json('Items')))\r\n#set($q = '\"')\r\n#set($response = {})\r\n#foreach($item in $items)\r\n#set($category = \"#if($item.Category.S=='null')category#{else}$item.Category.S#end\")\r\n#set($value = $item.Value.S)\r\n#if(!$response.containsKey($category))\r\n#set($_ = $response.put($category, []))\r\n#end\r\n#set($_ = $response[$category].add(\"${q}${value}${q}\"))\r\n#end\r\n{\r\n    \"status\": 200,\r\n    \"category\": $response.category,\r\n    \"subCategory\": {        \r\n    #foreach($category in $response.category)\r\n    #set($tags = $response[$util.escapeJavaScript($category).replaceAll('\\\\\"', '')])\r\n        $category: #if($!{tags}==\"\")[]#{else}$tags#end#if($foreach.hasNext),\r\n#end\r\n    #end\r\n    \r\n    }\r\n}"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "{\r\n    \"TableName\": \"$stageVariables.dynamoDBTagRefTableName\",\r\n    \"Select\": \"SPECIFIC_ATTRIBUTES\",\r\n    \"ProjectionExpression\": \"#C, #V\",\r\n    \"ExpressionAttributeNames\": {\r\n        \"#C\": \"Category\",\r\n        \"#V\": \"Value\"\r\n    },\r\n    \"ReturnConsumedCapacity\": \"TOTAL\"\r\n}\r\n"
+          },
+          "passthroughBehavior": "when_no_templates",
+          "type": "aws"
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagsRequestBodySchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Validate body, query string parameters, and headers",
+        "x-amazon-apigateway-integration": {
+          "credentials": "arn:aws:iam::741448960615:role/api-gateway-test-rest-api-service-role",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:ap-southeast-1:dynamodb:action/TransactWriteItems",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "requestTemplates": {
+            "application/json": "#set($tags = $util.parseJson($input.body).tags)\n#set($categories = [])\n#foreach($tag in $tags)\n#if(!$categories.contains($tag.category) && $tag.category != 'null')\n#set($_ = $categories.add($tag.category))\n#end\n#end\n{\n  \"ReturnConsumedCapacity\": \"TOTAL\",\n  \"TransactItems\": [\n  #foreach($category in $categories)\n  {\n     \"ConditionCheck\": {\n        \"ConditionExpression\": \"attribute_exists(#V)\",\n        \"ExpressionAttributeNames\": {\n            \"#V\": \"Value\"\n        },\n        \"Key\": {\n            \"Category\": { \"S\": \"null\" },\n            \"Value\": { \"S\": \"$category\" }\n        },\n        \"TableName\": \"$stageVariables.dynamoDBTagRefTableName\"\n     }\n  },\n  #end\n  #foreach($tag in $tags)\n  {\n    \"Put\": {\n        \"Item\": {\n            \"Category\": { \"S\": \"$tag.category\" },\n            \"Value\": { \"S\": \"$tag.value\" }\n        },\n        \"TableName\": \"$stageVariables.dynamoDBTagRefTableName\"\n     }\n  }#if($foreach.hasNext),#end\n  #end\n  ]\n}"
+          },
+          "passthroughBehavior": "when_no_match",
+          "type": "aws"
+        }
+      },
+      "options": {
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "when_no_match",
+          "type": "mock"
+        }
+      }
+    },
+    "/blogs": {
+      "get": {
+        "parameters": [
+          {
+            "name": "cat",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "last_slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "last_pub_date",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sub_cat",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogsResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-request-validator": "Validate query string parameters and headers",
+        "x-amazon-apigateway-integration": {
+          "credentials": "arn:aws:iam::741448960615:role/api-gateway-test-rest-api-service-role",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:ap-southeast-1:dynamodb:action/Query",
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseTemplates": {
+                "application/json": "#set($items = $util.parseJson($input.json('Items')))\n{\n    \"status\": 200,\n    \"blogs\": [\n    #foreach($item in $items)\n    {\n            \"category\": \"$item.Category.S\",\n            \"subCategory\": \"$item.SubCategory.S\",\n            \"publishDate\": \"$item.PublishDate.S\",\n            \"slug\": \"$item.Slug.S\"\n        }#if($foreach.hasNext),\n#end\n    #end\n    \n    ]\n}"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "#set($category = $util.escapeJavaScript($input.params('cat')))\r\n#set($subCategory = $util.escapeJavaScript($input.params('sub_cat')))\r\n#set($hasFilter = $!{category}!=\"\" || $!{subCategory}!=\"\")\r\n#set($lastPublishDate = $util.escapeJavaScript($input.params('last_pub_date')))\r\n#set($lastSlug = $util.escapeJavaScript($input.params('last_slug')))\r\n{\r\n    \"TableName\": \"$stageVariables.dynamoDBMainTableName\",\r\n    \"IndexName\": #if(!$hasFilter)\"PublishDateIndex\"#{else}#if($!{subCategory}!=\"\")\"SubCategoryIndex\"#{else}\"CategoryIndex\"#end#end,\r\n    \"Select\": \"ALL_PROJECTED_ATTRIBUTES\",\r\n    \"ExpressionAttributeNames\": {\r\n        \"#K\": #if(!$hasFilter)\"Type\"#{else}#if($!{subCategory}!=\"\")\"SubCategory\"#{else}\"Category\"#end#end\r\n    },\r\n    \"ExpressionAttributeValues\": {\r\n        \":v\": {\r\n            \"S\": #if(!$hasFilter)\"blog\"#{else}#if($!{subCategory}!=\"\")\"$subCategory\"#{else}\"$category\"#end#end\r\n        }\r\n    },\r\n    \"KeyConditionExpression\": \"#K = :v\",\r\n    \"Limit\": 2,\r\n    #if($!{lastPublishDate}!=\"\" && $!{lastSlug}!=\"\")\r\n    \"ExclusiveStartKey\": {\r\n        \"Type\": { \"S\": \"blog\" },\r\n        \"PublishDate\": { \"S\": \"$lastPublishDate\" },\r\n        \"Slug\": { \"S\": \"$lastSlug\" },\r\n        #if($!{subCategory}!=\"\")\"SubCategory\": { \"S\": \"$subCategory\" }#{else}\"Category\": { \"S\": \"$category\" }#end\r\n    },\r\n    #end\r\n    \"ReturnConsumedCapacity\": \"TOTAL\",\r\n    \"ScanIndexForward\": false\r\n}\r\n"
+          },
+          "passthroughBehavior": "when_no_match",
+          "type": "aws"
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlogsRequestBodySchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Validate body, query string parameters, and headers",
+        "x-amazon-apigateway-integration": {
+          "credentials": "arn:aws:iam::741448960615:role/api-gateway-test-rest-api-service-role",
+          "httpMethod": "POST",
+          "uri": "arn:aws:apigateway:ap-southeast-1:dynamodb:action/TransactWriteItems",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "requestTemplates": {
+            "application/json": "#set($blogs = $util.parseJson($input.body).blogs)\n#set($tags = {})\n#foreach($blog in $blogs)\n#if(!$tags.containsKey($blog.category))\n#set($_ = $tags.put($blog.category, []))\n#end\n#if(!$tags[$blog.category].contains($blog.sub_category))\n#set($_ = $tags[$blog.category].add($blog.sub_category))\n#end\n#end\n{\n  \"ReturnConsumedCapacity\": \"TOTAL\",\n  \"TransactItems\": [\n#foreach($category in $tags.keySet())\n  #foreach($subCategory in $tags[$category])\n  {\n     \"ConditionCheck\": {\n        \"ConditionExpression\": \"attribute_exists(#V)\",\n        \"ExpressionAttributeNames\": {\n            \"#V\": \"Value\"\n        },\n        \"Key\": {\n            \"Category\": { \"S\": \"$category\" },\n            \"Value\": { \"S\": \"$subCategory\" }\n        },\n        \"TableName\": \"$stageVariables.dynamoDBTagRefTableName\"\n     }\n  },\n  #end\n#end\n  #foreach($blog in $blogs)\n  {\n    \"Put\": {\n        \"Item\": {\n            \"Type\": { \"S\": \"blog\" },\n            \"Slug\": { \"S\": \"$blog.slug\" },\n            \"Category\": { \"S\": \"$blog.category\" },\n            \"SubCategory\": { \"S\": \"$blog.sub_category\" },\n            \"PublishDate\": { \"S\": \"$blog.publish_date\" }\n        },\n        \"TableName\": \"$stageVariables.dynamoDBMainTableName\"\n     }\n  }#if($foreach.hasNext),#end\n  #end\n  ]\n}"
+          },
+          "passthroughBehavior": "when_no_match",
+          "type": "aws"
+        }
+      },
+      "options": {
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "responses": {
+            "default": {
+              "statusCode": "200",
+              "responseParameters": {
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'"
+              }
+            }
+          },
+          "requestTemplates": {
+            "application/json": "{\"statusCode\": 200}"
+          },
+          "passthroughBehavior": "when_no_match",
+          "type": "mock"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Empty": {
+        "title": "Empty Schema",
+        "type": "object"
+      },
+      "TagsRequestBodySchema": {
+        "title": "Tags Request Body Schema",
+        "required": ["tags"],
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "required": ["category", "value"],
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "BlogsRequestBodySchema": {
+        "title": "Blogs Request Body Schema",
+        "required": ["blogs"],
+        "type": "object",
+        "properties": {
+          "blogs": {
+            "type": "array",
+            "items": {
+              "required": ["category", "publish_date", "slug", "sub_category"],
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "sub_category": {
+                  "type": "string"
+                },
+                "publish_date": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "BlogsResponseSchema": {
+        "title": "Blogs Response Schema",
+        "required": ["blogs", "status"],
+        "type": "object",
+        "properties": {
+          "status": {
+            "pattern": "^[245]00$",
+            "type": "integer",
+            "description": "The HTTP status code of the response."
+          },
+          "blogs": {
+            "type": "array",
+            "description": "A list of blog entries.",
+            "items": {
+              "required": ["category", "publishDate", "slug", "subCategory"],
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "description": "The category of the blog."
+                },
+                "subCategory": {
+                  "type": "string",
+                  "description": "The sub-category of the blog."
+                },
+                "publishDate": {
+                  "type": "string",
+                  "description": "The publish date of the blog in ISO 8601 format."
+                },
+                "slug": {
+                  "type": "string",
+                  "description": "A unique slug identifier for the blog."
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "A response containing a list of blogs with their categories, sub-categories, publish dates, and slugs."
+      },
+      "TagsResponseSchema": {
+        "title": "Tags Response Schema",
+        "required": ["category", "status", "subCategory"],
+        "type": "object",
+        "properties": {
+          "status": {
+            "pattern": "^[245]00$",
+            "type": "integer",
+            "description": "The HTTP status code of the response."
+          },
+          "category": {
+            "type": "array",
+            "description": "A list of tag categories.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subCategory": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "An object where each key is a category name, and the value is an array of tags belonging to that category."
+          }
+        },
+        "additionalProperties": false,
+        "description": "A response containing a list of categories and their associated subcategories."
+      }
+    },
+    "securitySchemes": {
+      "api_key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    }
+  },
+  "x-amazon-apigateway-gateway-responses": {
+    "DEFAULT_4XX": {
+      "responseParameters": {
+        "gatewayresponse.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+        "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+        "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      }
+    },
+    "DEFAULT_5XX": {
+      "responseParameters": {
+        "gatewayresponse.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
+        "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+        "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      }
+    }
+  },
+  "x-amazon-apigateway-request-validators": {
+    "Validate query string parameters and headers": {
+      "validateRequestParameters": true,
+      "validateRequestBody": false
+    },
+    "Validate body, query string parameters, and headers": {
+      "validateRequestParameters": true,
+      "validateRequestBody": true
+    }
+  }
+}

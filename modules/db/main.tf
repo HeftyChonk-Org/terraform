@@ -1,5 +1,5 @@
-resource "aws_dynamodb_table" "main_table" {
-  name                        = "${var.global_variables.prefix}-main-table"
+resource "aws_dynamodb_table" "blog_table" {
+  name                        = "${var.global_variables.prefix}-blog-table"
   billing_mode                = "PAY_PER_REQUEST"
   hash_key                    = "Type"
   range_key                   = "Slug"
@@ -31,8 +31,8 @@ resource "aws_dynamodb_table" "main_table" {
   }
 
   on_demand_throughput {
-    max_read_request_units = var.main_table_max_read_request_units
-    max_write_request_units = var.main_table_max_write_request_units
+    max_read_request_units = var.blog_table_max_read_request_units
+    max_write_request_units = var.blog_table_max_write_request_units
   }
 
   global_secondary_index {
