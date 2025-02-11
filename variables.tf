@@ -27,9 +27,49 @@ variable "account" {
   }
 }
 
+variable "is_production" {
+  type        = bool
+  description = "(Optional) Flag to determine if the environment is production or not"
+  default     = false
+
+}
+
 variable "branch" {
   type        = string
-  description = "(Optional) Name of the GitHub branch"
+  description = "(Optional) Name of the GitHub branch you are working on"
+}
+
+# ==========================================================================================
+# module: api
+# ==========================================================================================
+
+variable "enable_account_logging" {
+  type        = bool
+  description = "(Optional) Enable account logging for the API Gateway"
+}
+
+# ==========================================================================================
+# module: db
+# ==========================================================================================
+
+variable "blog_table_max_read_request_units" {
+  type        = number
+  description = "(Required) Maximum number of strongly consistent reads consumed per second for the main table before DynamoDB returns a ThrottlingException."
+}
+
+variable "blog_table_max_write_request_units" {
+  type        = number
+  description = "(Required) Maximum number of writes consumed per second for the main table before DynamoDB returns a ThrottlingException."
+}
+
+variable "tag_ref_table_max_read_request_units" {
+  type        = number
+  description = "(Required) Maximum number of strongly consistent reads consumed per second for the tag reference table before DynamoDB returns a ThrottlingException."
+}
+
+variable "tag_ref_table_max_write_request_units" {
+  type        = number
+  description = "(Required) Maximum number of writes consumed per second for the tag reference table before DynamoDB returns a ThrottlingException."
 }
 
 # ==========================================================================================
@@ -58,30 +98,13 @@ variable "cloudfront_response_headers_policy" {
   default     = null
 }
 
-# ==========================================================================================
-# module: api
-# ==========================================================================================
-
-# ==========================================================================================
-# module: db
-# ==========================================================================================
-
-variable "blog_table_max_read_request_units" {
-  type        = number
-  description = "(Required) Maximum number of strongly consistent reads consumed per second for the main table before DynamoDB returns a ThrottlingException."
+variable "hosted_zone_name" {
+  type        = string
+  description = "(Required) The name of the hosted zone"
 }
 
-variable "blog_table_max_write_request_units" {
-  type        = number
-  description = "(Required) Maximum number of writes consumed per second for the main table before DynamoDB returns a ThrottlingException."
-}
-
-variable "tag_ref_table_max_read_request_units" {
-  type        = number
-  description = "(Required) Maximum number of strongly consistent reads consumed per second for the tag reference table before DynamoDB returns a ThrottlingException."
-}
-
-variable "tag_ref_table_max_write_request_units" {
-  type        = number
-  description = "(Required) Maximum number of writes consumed per second for the tag reference table before DynamoDB returns a ThrottlingException."
+variable "app_sub_domain_name" {
+  type        = string
+  description = "(Optional) The sub domain name for the application"
+  default     = null
 }

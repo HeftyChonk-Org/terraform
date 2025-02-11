@@ -1,9 +1,10 @@
 variable "global_variables" {
   type = object({
-    project = string
-    region  = string
-    account = number
-    prefix  = string
+    project       = string
+    region        = string
+    account       = number
+    is_production = bool
+    prefix        = string
   })
   description = "Global variables for sharing across modules"
 }
@@ -37,5 +38,16 @@ variable "cloudfront_origin_request_policy" {
 variable "cloudfront_response_headers_policy" {
   type        = string
   description = "(Optional) CloudFront response header policy name. See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html for more details."
+  default     = null
+}
+
+variable "hosted_zone_name" {
+  type        = string
+  description = "(Required) The name of the hosted zone"
+}
+
+variable "app_sub_domain_name" {
+  type        = string
+  description = "(Optional) The sub domain name for the application"
   default     = null
 }

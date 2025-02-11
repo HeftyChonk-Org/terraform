@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "origin_bucket" {
   bucket        = substr("${var.global_variables.prefix}-origin-bucket", 0, 63)
-  force_destroy = strcontains(terraform.workspace, "prod") ? false : true
+  force_destroy = var.global_variables.is_production ? false : true
 }
 
 resource "aws_s3_bucket" "origin_access_log_bucket" {
